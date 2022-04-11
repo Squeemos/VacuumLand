@@ -18,7 +18,7 @@ while not done:
 # Current Features
 - height
     - Height of the grid
-    - defualt = 5
+    - default = 5
 - width
     - Width of the grid
     - default = 5
