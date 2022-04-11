@@ -1,5 +1,6 @@
 # VaccumLand
 Gym environment for a trash finding robot
+Current supported versions: Python 3.8x
 
 # Environment Creation
 ```python
@@ -59,3 +60,17 @@ gym.envs.registration.register(
     - When None: Randomly seeds the environment when calling np.random.shuffle()
     - When Int: Custom value for seed, gets called during reset in np.random.seed(seed)
     - default = None
+
+
+# TODOs
+- Make it check which version of Python the virtual environment is using, so it can adapt to using different version of Python
+- Handle environment with changing starting positions
+- Handle having obstacles in the environment (such as holes and walls)
+- Have different style of reward (more than just 1 / total trash)
+- Multiple styles of action (Cardinal, Diagonal, etc)
+- Better environment rendering (PyGame or OpenCV as well as text based)
+- Ability to render the environment with a frame rate
+- Ability to render the environment for a human to play
+- Make the seed function properly seed the environment
+- Ability to set custom boards
+- Modifiers to player value (instead of using default 1 and 2 for trash or 122 and 255 for as_image)
