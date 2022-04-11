@@ -17,11 +17,14 @@ while not done:
 
 # Current Features
 - height
-    - Height of the grid (default = 5)
+    - Height of the grid
+    - defualt = 5
 - width
-    - Width of the grid (default = 5)
+    - Width of the grid
+    - default = 5
 - trash
-    - How many pieces of trash to randomly place in the grid (default = 5)
+    - How many pieces of trash to randomly place in the grid
+    - default = 5
 - as_image
     - When True: Returns the observation as (Channel, Height, Width) in PyTorch image format
     - When False: Returns the observation as (Height, Width)
