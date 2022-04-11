@@ -63,16 +63,16 @@ gym.envs.registration.register(
 
 
 # TODOs
-- Convert to a PyPi package to install instead of including the file
-- Make it check which version of Python the virtual environment is using, so it can adapt to using different version of Python
-- Register the environment on inclusion of the file
-- Handle environment with changing starting positions
-- Handle having obstacles in the environment (such as holes and walls)
-- Have different style of reward (more than just 1 / total trash)
-- Multiple styles of action (Cardinal, Diagonal, etc)
-- Better environment rendering (PyGame or OpenCV as well as text based)
-- Ability to render the environment with a frame rate
-- Ability to render the environment for a human to play
-- Make the seed function properly seed the environment
-- Ability to set custom boards
-- Modifiers to player value (instead of using default 1 and 2 for trash or 122 and 255 for as_image)
+- [ ] Convert to a PyPi package to install instead of including the file
+- [ ] Make it check which version of Python the virtual environment is using, so it can adapt to using different version of Python
+- [ ] Register the environment on inclusion of the file
+- [ ] Handle environment with changing starting positions
+- [ ] Handle having obstacles in the environment (such as holes and walls)
+- [ ] Have different style of reward (more than just 1 / total trash)
+- [ ] Multiple styles of action (Cardinal, Diagonal, etc)
+- [ ] Better environment rendering (PyGame or OpenCV as well as text based)
+- [ ] Ability to render the environment with a frame rate
+- [ ] Ability to render the environment for a human to play
+- [ ] Make the seed function properly seed the environment
+- [ ] Ability to set custom boards
+- [ ] Modifiers to player value (instead of using default 1 and 2 for trash or 122 and 255 for as_image)
