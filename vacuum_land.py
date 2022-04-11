@@ -10,7 +10,7 @@ class VacuumLand(gym.Env):
                     trash:Type[int]=5,
                     as_image:Type[bool]=False,
                     penalty:Optional[Union[bool,float,int]]=True,
-                    max_steps:Optional[Union[bool,int]]=None,
+                    max_steps:Optional[Union[None,int]]=None,
                     seed:Optional[int]=None):
         """
             height    : Height of the board (Default: 5)
@@ -181,6 +181,7 @@ class VacuumLand(gym.Env):
 
             TODO : Render the environment using PyGame or opencv for more interesting visual
             TODO : Handle the rendering modes
+            TODO : Handle rendering the environment to render slower to be readable
         """
         try:
             print(self.board)
