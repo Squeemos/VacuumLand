@@ -15,6 +15,20 @@ while not done:
     env.render()
 ```
 
+# Register Environment With gym
+Sample for registering a VacuumLand env with a 20x20 board with 10 trash, a penalty, and 400 max steps
+```python
+from vacuum_land import VacuumLand
+import gym
+
+gym.envs.registration.register(
+    id = "VacuumLand-v0",
+    entry_point = VacuumLand,
+    max_episode_steps = 400,
+    kwargs = {'height' : 20, 'width' : 20, 'trash' : 10, 'as_image' : False, 'penalty' : True, 'seed' : 0, 'max_steps' : 400}
+)
+```
+
 # Current Features
 - height
     - Height of the grid
