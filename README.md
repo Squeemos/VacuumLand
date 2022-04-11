@@ -64,6 +64,7 @@ gym.envs.registration.register(
 
 
 # TODOs
+- [ ] Get code to follow PEP8 standard
 - [ ] Convert to a PyPi package to install instead of including the file
 - [ ] Make it check which version of Python the virtual environment is using, so it can adapt to using different version of Python
 - [ ] Register the environment on inclusion of the file
