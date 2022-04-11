@@ -63,7 +63,9 @@ gym.envs.registration.register(
 
 
 # TODOs
+- Convert to a PyPi package to install instead of including the file
 - Make it check which version of Python the virtual environment is using, so it can adapt to using different version of Python
+- Register the environment on inclusion of the file
 - Handle environment with changing starting positions
 - Handle having obstacles in the environment (such as holes and walls)
 - Have different style of reward (more than just 1 / total trash)
