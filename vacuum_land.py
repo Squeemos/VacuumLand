@@ -113,6 +113,9 @@ class VacuumLand(gym.Env):
         # Reset number of steps taken
         self.steps = 0
 
+        # Reset the number of trash
+        self.current_trash = self.trash
+
         if self.as_image:
             return self.board[...,np.newaxis]
         else:
@@ -155,6 +158,7 @@ class VacuumLand(gym.Env):
             reward = self.board[self.agent_pos]
             if reward == self.trash_val:
                 reward = self.reward_amount
+                self.current_trash -= 1
             self.board[self.agent_pos] = 1
             self.board[prev_location] = 0
 
@@ -163,12 +167,10 @@ class VacuumLand(gym.Env):
         # If the environment is done after this step
         if self.steps == self.max_steps:
             done = True
+        elif self.current_trash == 0:
+            done = True
         else:
-            # Check if there's still a reward
-            if self.trash_val in self.board:
-                done = False
-            else:
-                done = True
+            done = False
 
         if self.as_image:
             return self.board[...,np.newaxis], reward, done, {}
