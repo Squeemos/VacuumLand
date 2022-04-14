@@ -242,6 +242,3 @@ class VacuumLand(gym.Env):
         '''
 
         pass
-
-
-env = VacuumLand()
