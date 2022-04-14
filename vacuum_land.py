@@ -2,8 +2,14 @@ from typing import Any, Dict, Optional, Type, Union, Tuple, List
 
 import gym
 import numpy as np
+import warnings
 
 class VacuumLand(gym.Env):
+    '''
+        VacuumLand Class for an environment where a robot picks up trash
+    '''
+    metadata = {"render_modes" : ["human", "rgb_array"]}
+
     def __init__(self,
                     height:Type[int]=5,
                     width:Type[int]=5,
@@ -74,7 +80,7 @@ class VacuumLand(gym.Env):
         elif isinstance(penalty,float) or isinstance(penalty,int):
             self.penalty = penalty
         else:
-            assert isinstance(penalty,bool) or isinstance(penalty,float) or isinstance(penalty,int), f"Penalty must be one of type {[bool,float,int]}"
+            assert isinstance(penalty,(bool, float, int)), f"Penalty must be one of type {[bool,float,int]}"
 
 
         # Max steps involves stepping over every place in the board (or custom amount)
@@ -87,18 +93,27 @@ class VacuumLand(gym.Env):
             self.max_steps = self.width * self.height
 
         # Used for creating the random state of the board
-        self.seed = seed
+        self._seed = seed
 
-    def reset(self) -> Type[np.ndarray]:
+        # Setting the reward range
+        self.reward_range = (self.max_steps * self.penalty), 1
+
+    def reset(self, seed: Optional[Type[int]] = None, return_info : Type[bool] = False) -> Type[np.ndarray]:
         """
             Resets the board and the starting position. Agent always starts at (0,0) without the possibility of starting in position with trash.
             Also seeds the randomization.
 
+            seed        : Optional int to redo the seeding with
+            return_info : Whether to return additional info related to the environment
+
             TODO: Handle environment with changing starting position
         """
+        if seed is not None:
+            assert isinstance(seed,int), f"Seed must be of type int, passed {type(seed)}"
+            self._seed = seed
         # Seed the shuffle if there's a seed, otherwise it's random
-        if self.seed is not None:
-            np.random.seed(self.seed)
+        if self._seed is not None:
+            np.random.seed(self._seed)
         # Starting agent position
         self.agent_pos = (0,0)
 
@@ -116,10 +131,16 @@ class VacuumLand(gym.Env):
         # Reset the number of trash
         self.current_trash = self.trash
 
-        if self.as_image:
-            return self.board[...,np.newaxis]
+        if return_info:
+            if self.as_image:
+                return self.board[...,np.newaxis], {}
+            else:
+                return self.board, {}
         else:
-            return self.board
+            if self.as_image:
+                return self.board[...,np.newaxis]
+            else:
+                return self.board
 
     def step(self,action:Type[int]) -> Tuple[Type[np.ndarray], Type[float], Type[bool], Dict]:
         """
@@ -165,9 +186,7 @@ class VacuumLand(gym.Env):
         # Take a step
         self.steps += 1
         # If the environment is done after this step
-        if self.steps == self.max_steps:
-            done = True
-        elif self.current_trash == 0:
+        if self.steps == self.max_steps or not self.current_trash:
             done = True
         else:
             done = False
@@ -177,7 +196,7 @@ class VacuumLand(gym.Env):
         else:
             return self.board, reward, done, {}
 
-    def render(self, mode=None) -> None:
+    def render(self, mode:Type[str] = "human") -> None:
         """
             Renders the environment to the console with a print statement.
 
@@ -185,19 +204,44 @@ class VacuumLand(gym.Env):
             TODO : Handle the rendering modes
             TODO : Handle rendering the environment to render slower to be readable
         """
-        try:
-            print(self.board)
-        except AttributeError:
+        if hasattr(self, 'board'):
+            if mode == "human":
+                print(self.board)
+            elif mode == "rgb_array":
+                display_board = np.stack((self.board,self.board,self.board), axis=2)
+                display_board[self.agent_pos] = [255, 0, 0]
+                return display_board
+            else:
+                super(VacuumLand,self).render(mode=mode)
+        else:
             print("Trying to render an environment which has not been reset. Please call 'env.reset()' before rendering")
 
-    def seed(self, seed=None) -> List[Union[None,int]]:
+    def seed(self, seed:Type[int] = None) -> List[Union[None,int]]:
         """
-            Overwritten to comply with gym's environment requirement
-
-            TODO : Make this actually do something, as of right now it just doesn't do anything
+            Seeds the environment with the provided seed
         """
         # if there is no seed, return an empty list
         if seed is None:
             return []
+
+        assert isinstance(seed, int), f"seed must be an int or None, passed {type(seed)}"
+        # Set the seed
+        self._seed = seed
+
+        # Warn for deprecation
+        warnings.warn(
+            "Function `env.seed(seed)` is marked as deprecated and will be removed in the future. "
+            "Please use `env.reset(seed=seed) instead."
+        )
         # return the list of seeds used by RNG(s) in the environment
         return [seed]
+
+    def close(self) -> None:
+        '''
+            Cleanup anything allocated or opened
+        '''
+
+        pass
+
+
+env = VacuumLand()
