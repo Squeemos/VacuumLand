@@ -180,7 +180,7 @@ class VacuumLand(gym.Env):
             if reward == self.trash_val:
                 reward = self.reward_amount
                 self.current_trash -= 1
-            self.board[self.agent_pos] = 1
+            self.board[self.agent_pos] = self.player_val
             self.board[prev_location] = 0
 
         # Take a step
