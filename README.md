@@ -55,7 +55,7 @@ gym.envs.registration.register(
     - The maximum number of steps for the environment
     - When None: Defaults to Height * Width
     - When Int: Custom defined number for max steps (Ex. 400)
-    - default = None
+    - default = None (Height * Width)
 - seed
     - The seed for environment creation/reset
     - When None: Randomly seeds the environment when calling np.random.shuffle()
