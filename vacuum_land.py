@@ -93,6 +93,7 @@ class VacuumLand(gym.Env):
             self.max_steps = self.width * self.height
 
         # Used for creating the random state of the board
+        assert isinstance(seed, int), f"seed must be of type int rather than type {type(seed)}"
         self._seed = seed
 
         # Setting the reward range
