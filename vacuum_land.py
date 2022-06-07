@@ -45,6 +45,11 @@ class VacuumLand(gym.Env):
             TODO : Maybe add in the ability to take diagonal steps?
         """
         super(VacuumLand,self).__init__()
+        
+        # Check types for height, width, and trash
+        assert isinstance(height,int), f"height should be of type int rather than type {type(height)}"
+        assert isinstance(width,int), f"height should be of type int rather than type {type(width)}"
+        assert isinstance(trash,int), f"height should be of type int rather than type {type(trash)}"
         self.height = height
         self.width = width
         self.trash = trash
@@ -53,6 +58,7 @@ class VacuumLand(gym.Env):
 
         # Used if the agnet accepts image argument
         # Will return the board with shape (height,width,1)
+        assert isinstance(as_image, bool), f"as_image should be of type int rather than type {type(as_image)}"
         self.as_image = as_image
         self.internal_shape = (self.height,self.width)
 
