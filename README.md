@@ -7,7 +7,7 @@ Current supported versions: Python 3.8x
 ```python
 from vacuum_land import VacuumLand
 
-env = VacuumLand(height=5, width=5, trash=5, as_image=False, penaly=True, max_steps=25, seed=0)
+env = VacuumLand(height=5, width=5, trash=5, as_image=False, penalty=True, max_steps=25, seed=0)
 
 obs = env.reset()
 done = False
