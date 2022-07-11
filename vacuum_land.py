@@ -11,13 +11,13 @@ class VacuumLand(gym.Env):
     metadata = {"render_modes" : ["human", "rgb_array"]}
 
     def __init__(self,
-                    height:Type[int]=5,
-                    width:Type[int]=5,
-                    trash:Type[int]=5,
-                    as_image:Type[bool]=False,
-                    penalty:Optional[Union[bool,float,int]]=True,
-                    max_steps:Optional[Union[None,int]]=None,
-                    seed:Optional[int]=None):
+                    height : Type[int] = 5,
+                    width : Type[int] = 5,
+                    trash : Type[int] = 5,
+                    as_image : Type[bool] = False,
+                    penalty : Optional[Union[bool,float,int]] = True,
+                    max_steps : Optional[Union[None,int]] = None,
+                    seed : Optional[int] = None):
         """
             height    : Height of the board (Default: 5)
             width     : Width of the board (Default: 5)
@@ -44,7 +44,7 @@ class VacuumLand(gym.Env):
             TODO : Handle having a different form of reward (other than just 1 / trash)
             TODO : Maybe add in the ability to take diagonal steps?
         """
-        super(VacuumLand,self).__init__()
+        super(VacuumLand, self).__init__()
         self.height = height
         self.width = width
         self.trash = trash
@@ -54,16 +54,16 @@ class VacuumLand(gym.Env):
         # Used if the agnet accepts image argument
         # Will return the board with shape (height,width,1)
         self.as_image = as_image
-        self.internal_shape = (self.height,self.width)
+        self.internal_shape = (self.height, self.width)
 
         # Setting up spaces
         if self.as_image:
-            self.observation_shape = (self.height,self.width,1)
+            self.observation_shape = (self.height, self.width, 1)
             self.observation_space = gym.spaces.Box(low = 0, high = 255, shape = self.observation_shape, dtype = np.uint8)
             self.player_val = 122
             self.trash_val = 255
         else:
-            self.observation_shape = (self.height,self.width)
+            self.observation_shape = (self.height, self.width)
             self.observation_space = gym.spaces.Box(low = 0, high = 2, shape = self.observation_shape, dtype = np.uint8)
             self.player_val = 1
             self.trash_val = 2
@@ -75,20 +75,20 @@ class VacuumLand(gym.Env):
         self.reward_amount = 1 / self.trash
 
         # Penalty for moving to a space where there isn't trash
-        if isinstance(penalty,bool):
+        if isinstance(penalty, bool):
             self.penalty = -.01 if penalty else 0
-        elif isinstance(penalty,float) or isinstance(penalty,int):
+        elif isinstance(penalty, (float, int)):
             self.penalty = penalty
         else:
-            assert isinstance(penalty,(bool, float, int)), f"Penalty must be one of type {[bool,float,int]}"
+            assert isinstance(penalty, (bool, float, int)), f"Penalty must be one of type {[bool, float, int]}"
 
 
         # Max steps involves stepping over every place in the board (or custom amount)
-        if isinstance(max_steps,int):
+        if isinstance(max_steps, int):
             assert max_steps > 0, f"max_steps must be greater than 0. max_steps provided {max_steps}"
             self.max_steps = max_steps
         elif max_steps is not None:
-            assert isinstance(max_steps,int), f"max_steps must be of type int. Type provided: {type(max_steps)}"
+            assert isinstance(max_steps, int), f"max_steps must be of type int. Type provided: {type(max_steps)}"
         else:
             self.max_steps = self.width * self.height
 
@@ -98,7 +98,7 @@ class VacuumLand(gym.Env):
         # Setting the reward range
         self.reward_range = (self.max_steps * self.penalty), 1
 
-    def reset(self, seed: Optional[Type[int]] = None, return_info : Type[bool] = False) -> Type[np.ndarray]:
+    def reset(self, seed : Optional[Type[int]] = None, return_info : Type[bool] = False) -> Type[np.ndarray]:
         """
             Resets the board and the starting position. Agent always starts at (0,0) without the possibility of starting in position with trash.
             Also seeds the randomization.
@@ -109,7 +109,7 @@ class VacuumLand(gym.Env):
             TODO: Handle environment with changing starting position
         """
         if seed is not None:
-            assert isinstance(seed,int), f"Seed must be of type int, passed {type(seed)}"
+            assert isinstance(seed, int), f"Seed must be of type int, passed {type(seed)}"
             self._seed = seed
         # Seed the shuffle if there's a seed, otherwise it's random
         if self._seed is not None:
@@ -118,12 +118,12 @@ class VacuumLand(gym.Env):
         self.agent_pos = (0,0)
 
         # Create a mask of rewards, leaving a spot for (0,0) to have a 0
-        mask = np.zeros(self.height * self.width - 1,dtype=np.uint8)
+        mask = np.zeros(self.height * self.width - 1, dtype = np.uint8)
         # Trash has the value 2
         mask[:self.trash] = self.trash_val
         np.random.shuffle(mask)
         # Create the board
-        self.board = np.concatenate((np.full(1,self.player_val,dtype=np.uint8),mask)).reshape(self.internal_shape)
+        self.board = np.concatenate((np.full(1, self.player_val, dtype = np.uint8), mask)).reshape(self.internal_shape)
 
         # Reset number of steps taken
         self.steps = 0
@@ -133,16 +133,16 @@ class VacuumLand(gym.Env):
 
         if return_info:
             if self.as_image:
-                return self.board[...,np.newaxis], {}
+                return self.board[..., np.newaxis], {}
             else:
                 return self.board, {}
         else:
             if self.as_image:
-                return self.board[...,np.newaxis]
+                return self.board[..., np.newaxis]
             else:
                 return self.board
 
-    def step(self,action:Type[int]) -> Tuple[Type[np.ndarray], Type[float], Type[bool], Dict]:
+    def step(self, action : Type[int]) -> Tuple[Type[np.ndarray], Type[float], Type[bool], Dict]:
         """
             Take a step in the environment with the chosen action. Currently handles Up/Down/Left/Right
 
@@ -192,11 +192,11 @@ class VacuumLand(gym.Env):
             done = False
 
         if self.as_image:
-            return self.board[...,np.newaxis], reward, done, {}
+            return self.board[..., np.newaxis], reward, done, {}
         else:
             return self.board, reward, done, {}
 
-    def render(self, mode:Type[str] = "human") -> None:
+    def render(self, mode : Type[str] = "human") -> Union[None, np.ndarray]:
         """
             Renders the environment to the console with a print statement.
 
@@ -208,11 +208,11 @@ class VacuumLand(gym.Env):
             if mode == "human":
                 print(self.board)
             elif mode == "rgb_array":
-                display_board = np.stack((self.board,self.board,self.board), axis=2)
+                display_board = np.stack((self.board, self.board, self.board), axis=2)
                 display_board[self.agent_pos] = [255, 0, 0]
                 return display_board
             else:
-                super(VacuumLand,self).render(mode=mode)
+                super(VacuumLand, self).render(mode = mode)
         else:
             print("Trying to render an environment which has not been reset. Please call 'env.reset()' before rendering")
 
