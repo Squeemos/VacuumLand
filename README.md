@@ -7,7 +7,7 @@ Current supported versions: Python 3.8x
 ```python
 from vacuum_land import VacuumLand
 
-env = VacuumLand(height=5, width=5, trash=5, as_image=False, penaly=True, max_steps=25, seed=0)
+env = VacuumLand(height=5, width=5, trash=5, as_image=False, penalty=True, max_steps=25, seed=0)
 
 obs = env.reset()
 done = False
@@ -55,7 +55,7 @@ gym.envs.registration.register(
     - The maximum number of steps for the environment
     - When None: Defaults to Height * Width
     - When Int: Custom defined number for max steps (Ex. 400)
-    - default = None
+    - default = None (Height * Width)
 - seed
     - The seed for environment creation/reset
     - When None: Randomly seeds the environment when calling np.random.shuffle()
@@ -77,4 +77,6 @@ gym.envs.registration.register(
 - [ ] Ability to render the environment for a human to play
 - [ ] Make the seed function properly seed the environment
 - [ ] Ability to set custom boards
-- [ ] Modifiers to player value (instead of using default 1 and 2 for trash or 122 and 255 for as_image)
+- [ ] Modifiers to player/trash value (instead of 1/2 for as_image=False and 122/255 for as_image=True)
+- [ ] Register the env on inclusion
+- [ ] Make a wrapper for registering the env that allows for kwargs
