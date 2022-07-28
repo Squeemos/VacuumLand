@@ -78,5 +78,4 @@ gym.envs.registration.register(
 - [ ] Make the seed function properly seed the environment
 - [ ] Ability to set custom boards
 - [ ] Modifiers to player/trash value (instead of 1/2 for as_image=False and 122/255 for as_image=True)
-- [ ] Register the env on inclusion
 - [ ] Make a wrapper for registering the env that allows for kwargs
