@@ -3,6 +3,8 @@ Gym environment for a trash finding robot
 
 Current supported versions: Python 3.8x
 
+Required Packages: gym
+
 # Environment Creation
 ```python
 from vacuum_land import VacuumLand
