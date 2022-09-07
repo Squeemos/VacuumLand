@@ -17,40 +17,53 @@ class VacuumLand(gym.Env):
                     as_image : Type[bool] = False,
                     penalty : Optional[Union[bool,float,int]] = True,
                     max_steps : Optional[Union[None,int]] = None,
+                    reward : Optional[Union[int, float]] = None,
                     seed : Optional[int] = None):
         """
-            height    : Height of the board (Default: 5)
-            width     : Width of the board (Default: 5)
-            trash     : How many pieces of trash to be placed on the board (must be less than height * width) (Default: 5)
-            as_image  : Whether to return the board as an image with dimensions (height, width, 1) or as a 2D array with dimensions (height, width) (Default: False)
-            pentaly   : Penalty applied to stepping onto location without trash.
-                        True      : Penalty is -.01
-                        False     : Penatly is 0
-                        Int/Float : Penatly is custom value
-                        (Default: True, -.01)
+            height    : Height of the board
+                            (Default: 5)
 
-            max_steps : How many steps to take in the environment.
-                        None : Height * Width
-                        Int  : Custom value
-                        (Default: None, Height * Width)
+            width     : Width of the board
+                            (Default: 5)
+
+            trash     : How many pieces of trash to be placed on the board (must be less than height * width)
+                            (Default: 5)
+
+            as_image  : Whether to return the board as an image with dimensions (height, width, 1) or as a 2D array with dimensions (height, width)
+                            (Default: False)
+
+            pentaly   : Penalty applied to stepping onto location without trash
+                            True      : -.01
+                            False     : 0
+                            Int/Float : Custom value
+                            (Default: True, -.01)
+
+            max_steps : How many steps to take in the environment
+                            None : Height * Width
+                            Int  : Custom value
+                            (Default: None, Height * Width)
+
+            reward    : How much reward to give each time the robot collects a piece of trash
+                            None      : 1 / trash
+                            Int/Float : Custom value
+                            (Default : None, 1 / trash)
 
             seed      : Value to seed np.random with
-                        None : Random seed
-                        Int  : np.random.seed(seed)
-                        (Default: None, Random seed)
+                            None : Random seed
+                            Int  : np.random.seed(seed)
+                            (Default: None, Random seed)
 
             TODO : Handle environment with changing starting position
             TODO : Handle having obstacles/walls in the environment
-            TODO : Handle having a different form of reward (other than just 1 / trash)
             TODO : Maybe add in the ability to take diagonal steps?
         """
         super(VacuumLand, self).__init__()
 
         # Check types for height, width, and trash
-        assert isinstance(height, int), f"height should be of type int rather than type {type(height)}"
-        assert isinstance(width, int), f"height should be of type int rather than type {type(width)}"
-        assert isinstance(trash, int), f"height should be of type int rather than type {type(trash)}"
-        
+        assert isinstance(height, int) and not isinstance(height, bool), f"height should be of type int rather than type {type(height)}"
+        assert isinstance(width, int) and not isinstance(width, bool), f"height should be of type int rather than type {type(width)}"
+        assert isinstance(trash, int) and not isinstance(trash, bool), f"height should be of type int rather than type {type(trash)}"
+
         self.height = height
         self.width = width
         self.trash = trash
@@ -79,7 +92,11 @@ class VacuumLand(gym.Env):
         self.action_space = gym.spaces.Discrete(4,)
 
         # Reward for collecting the trash
-        self.reward_amount = 1 / self.trash
+        if reward is not None:
+            assert isinstance(reward, (int, float)) and not isinstance(reward, bool), f"Reward amount should be one of type {[int, float]} instead of {type(reward)}"
+            self.reward_amount = reward
+        else:
+            self.reward_amount = 1 / self.trash
 
         # Penalty for moving to a space where there isn't trash
         if isinstance(penalty, bool):
@@ -100,11 +117,13 @@ class VacuumLand(gym.Env):
             self.max_steps = self.width * self.height
 
         # Used for creating the random state of the board
-        assert isinstance(seed, int), f"seed must be of type int rather than type {type(seed)}"
-        self._seed = seed
+        if seed is not None:
+            assert isinstance(seed, int) and not isinstance(seed, bool), f"seed must be of type int rather than type {type(seed)}"
+            self._seed = seed
 
         # Setting the reward range
         self.reward_range = (self.max_steps * self.penalty), 1
+        self.steps = -1
 
     def reset(self, seed : Optional[Type[int]] = None, return_info : Type[bool] = False) -> Type[np.ndarray]:
         """
@@ -119,8 +138,6 @@ class VacuumLand(gym.Env):
         if seed is not None:
             assert isinstance(seed, int), f"Seed must be of type int, passed {type(seed)}"
             self._seed = seed
-        # Seed the shuffle if there's a seed, otherwise it's random
-        if self._seed is not None:
             np.random.seed(self._seed)
         # Starting agent position
         self.agent_pos = (0,0)
@@ -159,8 +176,11 @@ class VacuumLand(gym.Env):
             TODO : Maybe add in the ability to take diagonal steps?
         """
         # Make sure the action can be taken
-        assert action < self.action_space.n, f"Action attempted {action} in a space with only {self.action_space.n} possible actions"
-        assert self.steps <= self.max_steps, f"Trying to step in a done environment."
+        assert action >= 0 and action < self.action_space.n, f"Action attempted {action} in an action space [0, {self.action_space.n})"
+        if self.steps != -1:
+            assert self.steps <= self.max_steps, f"Trying to step in a done environment."
+        else:
+            raise Exception(f"Trying to step in an enviornment that has not been reset. Please call .reset() before .step()")
 
         prev_location = self.agent_pos
         # Up
@@ -196,6 +216,7 @@ class VacuumLand(gym.Env):
         # If the environment is done after this step
         if self.steps == self.max_steps or not self.current_trash:
             done = True
+            self.steps = -1
         else:
             done = False
 
@@ -250,3 +271,137 @@ class VacuumLand(gym.Env):
         '''
 
         pass
+
+
+if __name__ == '__main__':
+    #<editor-fold desc="Testing">
+    try:
+        v = VacuumLand(height = False)
+        print("Error not caught -> height incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(height = 10.1)
+        print("Error not caught -> height incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(height = [])
+        print("Error not caught -> height incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(width = False)
+        print("Error not caught -> width incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(width = 10.1)
+        print("Error not caught -> width incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(width = [])
+        print("Error not caught -> width incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(trash = False)
+        print("Error not caught -> trash incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(trash = 10.1)
+        print("Error not caught -> trash incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(trash = [])
+        print("Error not caught -> trash incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(width = 1, height = 1, trash = 2)
+        print("Error not caught -> trash impossible amount")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(as_image = 1)
+        print("Error not caught -> as_image incorrect type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(reward = [])
+        print("Error not caught -> reward incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(reward = True)
+        print("Error not caught -> reward incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(penalty = [])
+        print("Error not caught -> reward incorrect data type")
+    except AssertionError:
+        pass
+
+    v = VacuumLand(penalty = 1)
+    assert v.penalty == 1
+
+    v = VacuumLand(penalty = 0.1)
+    assert v.penalty == 0.1
+
+    v = VacuumLand(penalty = True)
+    assert v.penalty == -.01
+
+    try:
+        v = VacuumLand(max_steps = 0.1)
+        print("Error not caught -> max_steps incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(max_steps = -1)
+        print("Error not caught -> max_steps incorrect value")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(max_steps = False)
+        print("Error not caught -> max_steps incorrect value")
+    except AssertionError:
+        pass
+
+    v = VacuumLand()
+    assert v.max_steps == v.width * v.height
+
+    try:
+        v = VacuumLand(seed = False)
+        print("Error not caught -> seed incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(seed = 10.1)
+        print("Error not caught -> seed incorrect data type")
+    except AssertionError:
+        pass
+
+    v = VacuumLand(seed = 10)
+    assert v._seed == 10
+
+    #</editor-fold>
