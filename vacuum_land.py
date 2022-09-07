@@ -275,23 +275,6 @@ class VacuumLand(gym.Env):
 
 if __name__ == '__main__':
     #<editor-fold desc="Testing">
-    try:
-        v = VacuumLand(height = False)
-        print("Error not caught -> height incorrect data type")
-    except AssertionError:
-        pass
-
-    try:
-        v = VacuumLand(height = 10.1)
-        print("Error not caught -> height incorrect data type")
-    except AssertionError:
-        pass
-
-    try:
-        v = VacuumLand(height = [])
-        print("Error not caught -> height incorrect data type")
-    except AssertionError:
-        pass
 
     try:
         v = VacuumLand(width = False)
