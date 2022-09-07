@@ -64,6 +64,11 @@ class VacuumLand(gym.Env):
         assert isinstance(width, int) and not isinstance(width, bool), f"height should be of type int rather than type {type(width)}"
         assert isinstance(trash, int) and not isinstance(trash, bool), f"height should be of type int rather than type {type(trash)}"
 
+        assert height > 0, f"height should be > 0; passed value: {height}"
+        assert width > 0, f"width should be > 0; passed value: {width}"
+        assert trash > 0, f"trash should be > 0; passed value: {trash}"
+
+
         self.height = height
         self.width = width
         self.trash = trash
@@ -275,12 +280,6 @@ class VacuumLand(gym.Env):
 
 if __name__ == '__main__':
     #<editor-fold desc="Testing">
-    try:
-        v = VacuumLand(width = 1, height = 1, trash = 2)
-        print("Error not caught -> trash impossible amount")
-    except AssertionError:
-        pass
-
     try:
         v = VacuumLand(as_image = 1)
         print("Error not caught -> as_image incorrect type")
