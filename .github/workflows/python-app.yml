@@ -29,6 +29,7 @@ jobs:
         python -m pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: copy vacuum_land.py
+      uses: Squeemos/VacuumLand@master
       with:
         source: "vacuum_land.py"
         target: "tests/vacum_land.py"
