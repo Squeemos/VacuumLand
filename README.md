@@ -58,6 +58,10 @@ gym.envs.registration.register(
     - When None: Defaults to Height * Width
     - When Int: Custom defined number for max steps (Ex. 400)
     - default = None (Height * Width)
+- reward
+    - The reward to return when the robot steps over a piece of trash
+    - When None: Defaults to 1 / trash
+    - When Numerical Type: Custom value for reward (Ex. 1)
 - seed
     - The seed for environment creation/reset
     - When None: Randomly seeds the environment when calling np.random.shuffle()
@@ -72,7 +76,7 @@ gym.envs.registration.register(
 - [ ] Register the environment on inclusion of the file
 - [ ] Handle environment with changing starting positions
 - [ ] Handle having obstacles in the environment (such as holes and walls)
-- [ ] Have different style of reward (more than just 1 / total trash)
+- [x] Have different style of reward (more than just 1 / total trash)
 - [ ] Multiple styles of action (Cardinal, Diagonal, etc)
 - [ ] Better environment rendering (PyGame or OpenCV as well as text based)
 - [ ] Ability to render the environment with a frame rate
