@@ -275,6 +275,25 @@ class VacuumLand(gym.Env):
 
 if __name__ == '__main__':
     #<editor-fold desc="Testing">
+
+    try:
+        v = VacuumLand(trash = False)
+        print("Error not caught -> trash incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(trash = 10.1)
+        print("Error not caught -> trash incorrect data type")
+    except AssertionError:
+        pass
+
+    try:
+        v = VacuumLand(trash = [])
+        print("Error not caught -> trash incorrect data type")
+    except AssertionError:
+        pass
+
     try:
         v = VacuumLand(width = 1, height = 1, trash = 2)
         print("Error not caught -> trash impossible amount")
