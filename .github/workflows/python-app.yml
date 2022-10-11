@@ -31,6 +31,9 @@ jobs:
     - name: copy vacuum_land.py
       run: |
           cp "./vacuum_land.py" "./tests/vacuum_land.py"
+    - name: copy folder
+      run: |
+          cp "./bagel" "./tests/bagel"
     - name: Test with pytest
       run: |
         pytest tests
