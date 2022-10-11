@@ -1,5 +1,5 @@
 import pytest
-from .vacuum_land import VacuumLand
+from vacuum_land import VacuumLand
 
 def test_trash_bool():
     with pytest.raises(AssertionError):
