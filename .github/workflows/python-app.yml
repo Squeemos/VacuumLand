@@ -33,7 +33,7 @@ jobs:
           cp "./vacuum_land.py" "./tests/vacuum_land.py"
     - name: copy folder
       run: |
-          cp "./bagel/" "./tests/bagel/"
+          cp -r "./bagel/" "./tests/bagel/"
     - name: Test with pytest
       run: |
         pytest tests
