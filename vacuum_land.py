@@ -1,23 +1,42 @@
-from typing import Any, Dict, Optional, Type, Union, Tuple, List
+from typing import Any, Optional, Union, Tuple
 
 import gym
 import numpy as np
 import warnings
+from enum import Enum
+
+class ActionType(Enum):
+    CARDINAL = 4
+    DIAGONAL = 8
+
+    @property
+    def action_names(self):
+        return {
+            0 : "Up",
+            1 : "Down",
+            2 : "Left",
+            3 : "Right",
+            4 : "Up Left",
+            5 : "Up Right",
+            6 : "Down Left",
+            7 : "Down Right",
+        }
 
 class VacuumLand(gym.Env):
     '''
         VacuumLand Class for an environment where a robot picks up trash
     '''
-    metadata = {"render_modes" : ["human", "rgb_array"]}
+    metadata = {"render_modes" : ["human", "rgb_array", "better_array"]}
 
     def __init__(self,
-                    height : Type[int] = 5,
-                    width : Type[int] = 5,
-                    trash : Type[int] = 5,
-                    as_image : Type[bool] = False,
-                    penalty : Optional[Union[bool,float,int]] = True,
-                    max_steps : Optional[Union[None,int]] = None,
+                    height : int = 5,
+                    width : int = 5,
+                    trash : int = 5,
+                    as_image : bool = False,
+                    penalty : Optional[Union[bool, float, int]] = True,
+                    max_steps : Optional[Union[None, int]] = None,
                     reward : Optional[Union[int, float]] = None,
+                    action_type : Optional[ActionType] = ActionType.CARDINAL,
                     seed : Optional[int] = None):
         """
             height    : Height of the board
@@ -76,7 +95,7 @@ class VacuumLand(gym.Env):
         assert self.trash < self.height * self.width, f"Trash must be less than height * width: {self.height * self.width}, trash amount provdided: {self.trash}"
 
         # Used if the agnet accepts image argument
-        # Will return the board with shape (height,width,1)
+        # Will return the board with shape (height, width, 1)
         assert isinstance(as_image, bool), f"as_image should be of type int rather than type {type(as_image)}"
         self.as_image = as_image
         self.internal_shape = (self.height, self.width)
@@ -94,7 +113,11 @@ class VacuumLand(gym.Env):
             self.trash_val = 2
 
         # Up,Down,Left,Right
-        self.action_space = gym.spaces.Discrete(4,)
+        self.action_type = action_type
+        if self.action_type == ActionType.CARDINAL:
+            self.action_space = gym.spaces.Discrete(4,)
+        elif self.action_type == ActionType.DIAGONAL:
+            self.action_space = gym.spaces.Discrete(8,)
 
         # Reward for collecting the trash
         if reward is not None:
@@ -130,7 +153,7 @@ class VacuumLand(gym.Env):
         self.reward_range = (self.max_steps * self.penalty), 1
         self.steps = -1
 
-    def reset(self, seed : Optional[Type[int]] = None, return_info : Type[bool] = False) -> Type[np.ndarray]:
+    def reset(self, seed : Optional[int] = None, return_info : bool = False) -> np.ndarray:
         """
             Resets the board and the starting position. Agent always starts at (0,0) without the possibility of starting in position with trash.
             Also seeds the randomization.
@@ -172,7 +195,7 @@ class VacuumLand(gym.Env):
             else:
                 return self.board
 
-    def step(self, action : Type[int]) -> Tuple[Type[np.ndarray], Type[float], Type[bool], Dict]:
+    def step(self, action : int) -> Tuple[np.ndarray, float, bool, dict]:
         """
             Take a step in the environment with the chosen action. Currently handles Up/Down/Left/Right
 
@@ -205,6 +228,26 @@ class VacuumLand(gym.Env):
             if self.agent_pos[1] != self.width - 1:
                 self.agent_pos = (self.agent_pos[0], self.agent_pos[1] + 1)
 
+        # Diagonal Left Up
+        elif action == 4:
+            if self.agent_pos[0] != 0 and self.agent_pos[1] != 0:
+                self.agent_pos = (self.agent_pos[0] - 1, self.agent_pos[1] - 1)
+
+        # Diagonal Right Up
+        elif action == 5:
+            if self.agent_pos[0] != 0 and self.agent_pos[1] != self.width - 1:
+                self.agent_pos = (self.agent_pos[0] - 1, self.agent_pos[1] + 1)
+
+        # Diagoanl Down Left
+        elif action == 6:
+            if self.agent_pos[0] != self.height - 1 and self.agent_pos[1] != 0:
+                self.agent_pos = (self.agent_pos[0] + 1, self.agent_pos[1] - 1)
+
+        # Digoanl Down Right
+        elif action == 7:
+            if self.agent_pos[0] != self.height - 1 and self.agent_pos[1] != self.width - 1:
+                self.agent_pos = (self.agent_pos[0] + 1, self.agent_pos[1] + 1)
+
         # If the agent didn't move
         if self.agent_pos == prev_location:
             reward = self.penalty
@@ -230,7 +273,7 @@ class VacuumLand(gym.Env):
         else:
             return self.board, reward, done, {}
 
-    def render(self, mode : Type[str] = "human") -> Union[None, np.ndarray]:
+    def render(self, mode : str = "human") -> Union[None, np.ndarray]:
         """
             Renders the environment to the console with a print statement.
 
@@ -245,12 +288,15 @@ class VacuumLand(gym.Env):
                 display_board = np.stack((self.board, self.board, self.board), axis=2)
                 display_board[self.agent_pos] = [255, 0, 0]
                 return display_board
+            elif mode == "better_array":
+                for row in self.board:
+                    print(row)
             else:
                 super(VacuumLand, self).render(mode = mode)
         else:
             print("Trying to render an environment which has not been reset. Please call 'env.reset()' before rendering")
 
-    def seed(self, seed:Type[int] = None) -> List[Union[None,int]]:
+    def seed(self, seed : int = None) -> list[Union[None, int]]:
         """
             Seeds the environment with the provided seed
         """
@@ -277,76 +323,20 @@ class VacuumLand(gym.Env):
 
         pass
 
+    def prompt_human_move(self) -> None:
+        print_string = "Which action would you like to take?\n"
+        for n in range(self.action_type.value):
+            print_string += f"{n:2}: {self.action_type.action_names[n]}\n"
 
-if __name__ == '__main__':
-    #<editor-fold desc="Testing">
-    try:
-        v = VacuumLand(as_image = 1)
-        print("Error not caught -> as_image incorrect type")
-    except AssertionError:
-        pass
+        action = int(input(print_string))
 
-    try:
-        v = VacuumLand(reward = [])
-        print("Error not caught -> reward incorrect data type")
-    except AssertionError:
-        pass
+        return action
 
-    try:
-        v = VacuumLand(reward = True)
-        print("Error not caught -> reward incorrect data type")
-    except AssertionError:
-        pass
-
-    try:
-        v = VacuumLand(penalty = [])
-        print("Error not caught -> reward incorrect data type")
-    except AssertionError:
-        pass
-
-    v = VacuumLand(penalty = 1)
-    assert v.penalty == 1
-
-    v = VacuumLand(penalty = 0.1)
-    assert v.penalty == 0.1
-
-    v = VacuumLand(penalty = True)
-    assert v.penalty == -.01
-
-    try:
-        v = VacuumLand(max_steps = 0.1)
-        print("Error not caught -> max_steps incorrect data type")
-    except AssertionError:
-        pass
-
-    try:
-        v = VacuumLand(max_steps = -1)
-        print("Error not caught -> max_steps incorrect value")
-    except AssertionError:
-        pass
-
-    try:
-        v = VacuumLand(max_steps = False)
-        print("Error not caught -> max_steps incorrect value")
-    except AssertionError:
-        pass
-
-    v = VacuumLand()
-    assert v.max_steps == v.width * v.height
-
-    try:
-        v = VacuumLand(seed = False)
-        print("Error not caught -> seed incorrect data type")
-    except AssertionError:
-        pass
-
-    try:
-        v = VacuumLand(seed = 10.1)
-        print("Error not caught -> seed incorrect data type")
-    except AssertionError:
-        pass
-
-    v = VacuumLand(seed = 10)
-    assert v._seed == 10
-
-    #</editor-fold>
+    @classmethod
+    def register(cls, *args, **kwargs):
+        gym.envs.registration.register(
+            id = "VacuumLand-v0",
+            entry_point = VacuumLand,
+            max_episode_steps = kwargs.get("max_steps", 400),
+            kwargs = kwargs,
+        )
