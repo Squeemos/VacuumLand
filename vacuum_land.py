@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union, Tuple
+from typing import Any, Optional, Union
 
 import gym
 import numpy as np
@@ -34,8 +34,9 @@ class VacuumLand(gym.Env):
                     trash : int = 5,
                     as_image : bool = False,
                     penalty : Optional[Union[bool, float, int]] = True,
-                    max_steps : Optional[Union[None, int]] = None,
+                    max_steps : Optional[int] = None,
                     reward : Optional[Union[int, float]] = None,
+                    starting_pos : Optional[Union[tuple[int, int], list[int, int], str]] = None,
                     action_type : Optional[ActionType] = ActionType.CARDINAL,
                     seed : Optional[int] = None):
         """
@@ -65,14 +66,24 @@ class VacuumLand(gym.Env):
             reward    : How much reward to give each time the robot collects a piece of trash
                             None      : 1 / trash
                             Int/Float : Custom value
-                            (Default : None, 1 / trash)
+                            (Default: None, 1 / trash)
+
+            action_type : The type of action the agent will be allowed to take
+                            ActionType.CARDINAL : Cardinal movement direction (4)
+                            ActionType.DIAGONAL : Diagonal movement directions (8)
+                            (Default: ActionType.CARDINAL)
+
+            starting_pos : The location the agent stats out at
+                            Tuple[Int, Int] : x, y for the agent to start at
+                            List[Int, Int] : x, y for the agent to start at
+                            str : What type of starting position (random)
+                            (Default: None, (0, 0))
 
             seed      : Value to seed np.random with
                             None : Random seed
                             Int  : np.random.seed(seed)
                             (Default: None, Random seed)
 
-            TODO : Handle environment with changing starting position
             TODO : Handle having obstacles/walls in the environment
             TODO : Maybe add in the ability to take diagonal steps?
         """
@@ -86,7 +97,6 @@ class VacuumLand(gym.Env):
         assert height > 0, f"height should be > 0; passed value: {height}"
         assert width > 0, f"width should be > 0; passed value: {width}"
         assert trash > 0, f"trash should be > 0; passed value: {trash}"
-
 
         self.height = height
         self.width = width
@@ -114,10 +124,7 @@ class VacuumLand(gym.Env):
 
         # Up,Down,Left,Right
         self.action_type = action_type
-        if self.action_type == ActionType.CARDINAL:
-            self.action_space = gym.spaces.Discrete(4,)
-        elif self.action_type == ActionType.DIAGONAL:
-            self.action_space = gym.spaces.Discrete(8,)
+        self.action_space = gym.spaces.Discrete(action_type.value,)
 
         # Reward for collecting the trash
         if reward is not None:
@@ -133,7 +140,6 @@ class VacuumLand(gym.Env):
             self.penalty = penalty
         else:
             assert isinstance(penalty, (bool, float, int)), f"Penalty must be one of type {[bool, float, int]}"
-
 
         # Max steps involves stepping over every place in the board (or custom amount)
         if isinstance(max_steps, int):
@@ -153,30 +159,68 @@ class VacuumLand(gym.Env):
         self.reward_range = (self.max_steps * self.penalty), 1
         self.steps = -1
 
-    def reset(self, seed : Optional[int] = None, return_info : bool = False) -> np.ndarray:
+        # Set the starting position
+        if starting_pos is None:
+            starting_pos = (0, 0)
+        elif isinstance(starting_pos, (tuple, list)):
+            assert len(starting_pos) == 2, f"Starting position must be x, y pair. Not {len(starting_pos)}"
+            for item in starting_pos:
+                assert isinstance(item, int), f"Starting positions should be of type int rather than type {type(item)}"
+        elif isinstance(starting_pos, str):
+            pass
+        else:
+            assert isinstance(starting_pos, (list, tuple, str)), f"Starting positions should be one of type {[list, tuple, str]}"
+        self.starting_pos = starting_pos
+
+    def reset(self, seed : Optional[int] = None, return_info : bool = False) -> Union[np.ndarray, tuple[np.ndarray, dict]]:
         """
             Resets the board and the starting position. Agent always starts at (0,0) without the possibility of starting in position with trash.
             Also seeds the randomization.
 
             seed        : Optional int to redo the seeding with
             return_info : Whether to return additional info related to the environment
-
-            TODO: Handle environment with changing starting position
         """
         if seed is not None:
             assert isinstance(seed, int), f"Seed must be of type int, passed {type(seed)}"
             self._seed = seed
             np.random.seed(self._seed)
         # Starting agent position
-        self.agent_pos = (0,0)
+        if isinstance(self.starting_pos, (tuple, list)):
+            self.agent_pos = self.starting_pos
+        elif isinstance(self.starting_pos, str):
+            if self.starting_pos == "random":
+                x = np.random.randint(self.width)
+                y = np.random.randint(self.height)
+                self.agent_pos = (x, y)
+            else:
+                warnings.warn(
+                    f"Unhandled starting position type: {self.starting_pos} "
+                    f"Currently handled tpyes: random "
+                    "Setting position to (0, 0) "
+                )
+                self.agent_pos = (0, 0)
 
-        # Create a mask of rewards, leaving a spot for (0,0) to have a 0
+        # Create a mask of rewards, leaving a spot for agent position
         mask = np.zeros(self.height * self.width - 1, dtype = np.uint8)
-        # Trash has the value 2
+        # Set trash values
         mask[:self.trash] = self.trash_val
+        # Randomly shuffle the trash
         np.random.shuffle(mask)
+
         # Create the board
-        self.board = np.concatenate((np.full(1, self.player_val, dtype = np.uint8), mask)).reshape(self.internal_shape)
+        left_size = self.agent_pos[0] * self.width + self.agent_pos[1]
+        left = mask[:left_size]
+        right = mask[left_size:]
+        player = np.full(1, self.player_val, dtype = np.uint8)
+        # Stuff on both sides of agent
+        if len(left) and len(right):
+            self.board = np.concatenate((left, player, right)).reshape(self.internal_shape)
+        # Only things to the left of agent (bottom right corner)
+        elif len(left) and not len(right):
+            self.board = np.concatenate((left, player)).reshape(self.internal_shape)
+        # Only things to right of agent (top left corner)
+        elif not len(left) and len(right):
+            self.board = np.concatenate((player, right)).reshape(self.internal_shape)
 
         # Reset number of steps taken
         self.steps = 0
@@ -195,13 +239,11 @@ class VacuumLand(gym.Env):
             else:
                 return self.board
 
-    def step(self, action : int) -> Tuple[np.ndarray, float, bool, dict]:
+    def step(self, action : int) -> tuple[np.ndarray, float, bool, dict]:
         """
             Take a step in the environment with the chosen action. Currently handles Up/Down/Left/Right
 
             action : Which action to take
-
-            TODO : Maybe add in the ability to take diagonal steps?
         """
         # Make sure the action can be taken
         assert action >= 0 and action < self.action_space.n, f"Action attempted {action} in an action space [0, {self.action_space.n})"
@@ -252,10 +294,15 @@ class VacuumLand(gym.Env):
         if self.agent_pos == prev_location:
             reward = self.penalty
         else:
+            # Agent moved, get the value at location
             reward = self.board[self.agent_pos]
             if reward == self.trash_val:
+                # If we collected trash, reward
                 reward = self.reward_amount
                 self.current_trash -= 1
+            else:
+                # Did not collect trash, penalty
+                reward = self.penalty
             self.board[self.agent_pos] = self.player_val
             self.board[prev_location] = 0
 
@@ -323,7 +370,10 @@ class VacuumLand(gym.Env):
 
         pass
 
-    def prompt_human_move(self) -> None:
+    def prompt_human_move(self) -> int:
+        '''
+            Prompts a human player to make a move
+        '''
         print_string = "Which action would you like to take?\n"
         for n in range(self.action_type.value):
             print_string += f"{n:2}: {self.action_type.action_names[n]}\n"
@@ -333,7 +383,10 @@ class VacuumLand(gym.Env):
         return action
 
     @classmethod
-    def register(cls, *args, **kwargs):
+    def register(cls, *args, **kwargs) -> None:
+        '''
+            Registers a VacuumLand environment with a list of kwargs
+        '''
         gym.envs.registration.register(
             id = "VacuumLand-v0",
             entry_point = VacuumLand,
